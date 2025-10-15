@@ -1,11 +1,15 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OSPSuite.Core.Domain;
 using OSPSuite.Core.Events;
 using OSPSuite.Core.Serialization.SimModel.Services;
+using OSPSuite.Utility;
+using OSPSuite.Utility.Events;
 using OSPSuite.Utility.Extensions;
 using PKSim.Core.Events;
 using PKSim.Core.Model;
@@ -19,6 +23,9 @@ namespace PKSim.Core.Services
       void StopAllSimulations();
       bool IsSimulationRunning(Simulation simulation);
       bool IsSimulationIdle(Simulation simulation);
+      int ActiveSimulationsCount { get; }
+      IReadOnlyCollection<Simulation> ActiveSimulations { get; }
+      bool AnySimulationRunning { get; }
    }
 
    public class InteractiveSimulationRunner : IInteractiveSimulationRunner
@@ -30,8 +37,12 @@ namespace PKSim.Core.Services
       private readonly ILazyLoadTask _lazyLoadTask;
       private readonly IExecutionContext _executionContext;
       private readonly ConcurrentDictionary<Simulation, CancellationTokenSource> _cancellationTokenSources = new ConcurrentDictionary<Simulation, CancellationTokenSource>();
-
+      private readonly IEventPublisher _eventPublisher;
       private readonly SimulationRunOptions _simulationRunOptions;
+
+      public int ActiveSimulationsCount => _cancellationTokenSources.Count;
+      public IReadOnlyCollection<Simulation> ActiveSimulations => _cancellationTokenSources.Keys.ToList().AsReadOnly();
+      public bool AnySimulationRunning => ActiveSimulationsCount > 0;
 
       public InteractiveSimulationRunner(
          ISimulationSettingsRetriever simulationSettingsRetriever,
@@ -51,7 +62,7 @@ namespace PKSim.Core.Services
          _simulationRunOptions = new SimulationRunOptions
          {
             CheckForNegativeValues = true,
-            RaiseEvents = true,
+            RaiseEvents = true, //This is always true, but still worth checking before rising an event since it can change.
             RunForAllOutputs = false,
             SimModelExportMode = SimModelExportMode.Optimized
          };
@@ -68,6 +79,8 @@ namespace PKSim.Core.Services
          var cts = new CancellationTokenSource();
          if (!_cancellationTokenSources.TryAdd(simulation, cts)) //this will prevent from running one that is already running
             return;
+
+         var begin = new DateTime();
          try
          {
             _lazyLoadTask.Load(simulation);
@@ -81,9 +94,10 @@ namespace PKSim.Core.Services
                simulation.OutputSelections.UpdatePropertiesFrom(outputSelections, _cloner);
                mappingsNotSelected(simulation).Each(simulation.OutputMappings.Remove);
 
-               _executionContext.PublishEvent(new SimulationOutputSelectionsChangedEvent(simulation));
+               raiseEvent(new SimulationOutputSelectionsChangedEvent(simulation));
             }
-
+            begin = SystemTime.UtcNow();
+            raiseEvent(new SimulationRunStartedEvent(simulation));
             await _simulationRunner.RunSimulation(simulation, _simulationRunOptions, cts.Token);
 
             addAnalysableToSimulationIfRequired(simulation);
@@ -92,10 +106,11 @@ namespace PKSim.Core.Services
          {
             if (_cancellationTokenSources.ContainsKey(simulation))
             {
+               var end = SystemTime.UtcNow();
+               var timeSpent = end - begin;
                if (_cancellationTokenSources.TryRemove(simulation, out var ctsToDispose))
-               {
                   ctsToDispose.Dispose();
-               }
+               raiseEvent(new SimulationRunFinishedEvent(simulation, timeSpent));
             }
          }
       }
@@ -104,7 +119,7 @@ namespace PKSim.Core.Services
          simulation.OutputMappings.Where(outputMapping => !outputMappingIsSelected(simulation, outputMapping)).ToList();
 
       private static bool outputMappingIsSelected(Simulation simulation, OutputMapping outputMapping) =>
-         simulation.OutputSelections.AllOutputs.Any(quantitySelection => Equals(quantitySelection.Path, outputMapping.OutputPath));
+         simulation.OutputSelections.AllOutputs.Any(q => Equals(q.Path, outputMapping.OutputPath));
 
       private bool outputSelectionRequired(Simulation simulation, bool selectOutput)
       {
@@ -123,6 +138,11 @@ namespace PKSim.Core.Services
          if (simulation.Analyses.Count() != 0) return;
          _simulationAnalysisCreator.CreateAnalysisFor(simulation);
       }
+      private void raiseEvent<T>(T eventToPublish)
+      {
+         if (_simulationRunOptions.RaiseEvents)
+            _executionContext.PublishEvent(eventToPublish);
+      }
 
       public void StopSimulation(Simulation simulation)
       {
@@ -132,9 +152,7 @@ namespace PKSim.Core.Services
       public void StopAllSimulations()
       {
          foreach (var simulation in _cancellationTokenSources.Keys.ToList())
-         {
             tryCancelAndDispose(simulation);
-         }
       }
 
       private void tryCancelAndDispose(Simulation simulation)
@@ -143,7 +161,7 @@ namespace PKSim.Core.Services
          {
             cts.Cancel();
             cts.Dispose();
-            _executionContext.PublishEvent(new SimulationRunCanceledEvent(simulation));
+            raiseEvent(new SimulationRunCanceledEvent(simulation));
          }
       }
 
