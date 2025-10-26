@@ -3,7 +3,7 @@ name: PK-Sim Nightly Badge
 on:
   workflow_run:
     workflows:
-      - build-nightly_12.2.yml
+      - "Build Nightly 12.2" # build-nightly_12.2.yml
     types:
       - completed
 
