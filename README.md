@@ -26,8 +26,8 @@ Further substitute the formulation, to obtain a controlled-release per oral simu
 to obtain a multiple dose simulation model, or substitute the compound to obtain a simulation model for another drug.
 
 ## Code Status
-[![Build status](https://img.shields.io/github/actions/workflow/status/Open-Systems-Pharmacology/PK-Sim/pk-sim-nightly-badge.yml?label=Build%20status)](https://github.com/Open-Systems-Pharmacology/PK-Sim/actions/workflows/build-nightly_12.2.yml)
-[![Coverage status](https://codecov.io/gh/Open-Systems-Pharmacology/PK-Sim/branch/develop/graph/badge.svg)](https://codecov.io/gh/Open-Systems-Pharmacology/PK-Sim)
+[![Build status](https://img.shields.io/github/actions/workflow/status/Yuri05-TestOrg/Test_PK-Sim/pk-sim-nightly-badge.yml?label=Build%20status)](https://github.com/Yuri05-TestOrg/Test_PK-Sim/actions/workflows/build-nightly_12.2.yml)
+[![Coverage status](https://codecov.io/gh/Yuri05-TestOrg/Test_PK-Sim/branch/develop/graph/badge.svg)](https://codecov.io/gh/Yuri05-TestOrg/Test_PK-Sim)
 
 ## Code of conduct
 Everyone interacting in the Open Systems Pharmacology community (codebases, issue trackers, chat rooms, mailing lists etc...) is expected to follow the Open Systems Pharmacology [code of conduct](https://github.com/Open-Systems-Pharmacology/Suite/blob/master/CODE_OF_CONDUCT.md).
