@@ -25,13 +25,9 @@ jobs:
       - name: Check latest non-cancelled run of build-nightly_12.2.yml
         if: ${{ github.event.workflow_run.conclusion == 'cancelled' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # env variable GH_TOKEN is automatically used by GH CLI
         run: |
           set -euo pipefail
-
-          # authenticate gh with the token
-          echo "Authenticating gh..."
-          gh auth login --with-token <<< "$GITHUB_TOKEN"
 
           workflow_file='build-nightly_12.2.yml'
           repo="${GITHUB_REPOSITORY}"  # owner/repo
