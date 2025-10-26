@@ -1,0 +1,16 @@
+name: PK-Sim Nightly Badge REUSABLE
+
+on:
+  workflow_run:
+    workflows:
+      - "Build Nightly 12.2"
+    types:
+      - completed
+
+jobs:
+  call-badge:
+    uses: ./.github/workflows/nightly-badge.yml
+    with:
+      nightly-build-workflow: "build-nightly_12.2.yml"
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
