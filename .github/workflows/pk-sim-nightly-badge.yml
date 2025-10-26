@@ -35,7 +35,7 @@ jobs:
           echo "Querying recent runs for workflow file: $workflow_file in $repo"
 
           # Count non-cancelled runs
-          non_cancelled_count=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.status!="cancelled")) | length')
+          non_cancelled_count=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.conclusion!="cancelled")) | length')
 
           if [ -z "$non_cancelled_count" ] || [ "$non_cancelled_count" -eq 0 ]; then
             echo "No non-cancelled runs found for $workflow_file."
