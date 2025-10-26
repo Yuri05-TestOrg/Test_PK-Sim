@@ -26,7 +26,7 @@ Further substitute the formulation, to obtain a controlled-release per oral simu
 to obtain a multiple dose simulation model, or substitute the compound to obtain a simulation model for another drug.
 
 ## Code Status
-[![Build status](https://img.shields.io/github/actions/workflow/status/Open-Systems-Pharmacology/PK-Sim/build-nightly_12.2.yml?logo=nuget&label=Build%20status)](https://github.com/Open-Systems-Pharmacology/PK-Sim/actions/workflows/build-nightly_12.2.yml)
+[![Build status](https://img.shields.io/github/actions/workflow/status/Open-Systems-Pharmacology/PK-Sim/pk-sim-nightly-badge.yml?label=Build%20status)](https://github.com/Open-Systems-Pharmacology/PK-Sim/actions/workflows/build-nightly_12.2.yml)
 [![Coverage status](https://codecov.io/gh/Open-Systems-Pharmacology/PK-Sim/branch/develop/graph/badge.svg)](https://codecov.io/gh/Open-Systems-Pharmacology/PK-Sim)
 
 ## Code of conduct
