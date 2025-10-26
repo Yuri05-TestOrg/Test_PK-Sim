@@ -9,7 +9,7 @@ on:
 
 jobs:
   call-badge:
-    uses: ./.github/workflows/nightly-badge.yml
+    uses: Yuri05-TestOrg/Test_Workflows/.github/workflows/nightly-badge.yml@main #./.github/workflows/nightly-badge.yml
     with:
       nightly-build-workflow: "build-nightly_12.2.yml"
     #secrets:
