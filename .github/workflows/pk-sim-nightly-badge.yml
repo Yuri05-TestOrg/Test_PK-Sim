@@ -34,18 +34,22 @@ jobs:
 
           echo "Querying recent runs for workflow file: $workflow_file in $repo"
 
+          # Fetch non-cancelled runs once and reuse
+          non_cancelled_runs=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.conclusion!="cancelled"))')
+
           # Count non-cancelled runs
-          non_cancelled_count=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.conclusion!="cancelled")) | length')
+          non_cancelled_count=$(echo "$non_cancelled_runs" | jq 'length')
 
           if [ -z "$non_cancelled_count" ] || [ "$non_cancelled_count" -eq 0 ]; then
             echo "No non-cancelled runs found for $workflow_file."
             exit 1
           fi
 
-          # Get the first (most recent) non-cancelled run
-          run_id=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.conclusion!="cancelled")) | .[0].id')
-          run_status=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.conclusion!="cancelled")) | .[0].status')
-          run_conclusion=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.conclusion!="cancelled")) | .[0].conclusion')
+          # Get the first (most recent) non-cancelled run object once and extract fields
+          first_run=$(echo "$non_cancelled_runs" | jq '.[0]')
+          run_id=$(echo "$first_run" | jq -r '.id')
+          run_status=$(echo "$first_run" | jq -r '.status')
+          run_conclusion=$(echo "$first_run" | jq -r '.conclusion')
 
           echo "Selected run id=$run_id status=$run_status conclusion=$run_conclusion"
 
