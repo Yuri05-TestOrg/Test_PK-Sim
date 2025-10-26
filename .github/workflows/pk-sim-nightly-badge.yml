@@ -3,7 +3,7 @@ name: PK-Sim Nightly Badge
 on:
   workflow_run:
     workflows:
-      - "Build Nightly 12.2" # build-nightly_12.2.yml
+      - "Build Nightly 12.2"
     types:
       - completed
 
@@ -12,14 +12,51 @@ jobs:
     name: Badge proxy
     runs-on: ubuntu-latest
     steps:
-      - name: Log upstream conclusion
+      - name: Log upstream conclusion (event)
         run: |
           echo "Upstream conclusion: ${{ github.event.workflow_run.conclusion }}"
 
-      # Fail this proxy workflow only for real failures. Everything else (success, cancelled, skipped, neutral)
-      # will result in a successful proxy run, making the badge green.
       - name: Mark as failing if upstream failed
-        if: ${{ contains(fromJson('["failure","timed_out","action_required","stale","startup_failure"]'), github.event.workflow_run.conclusion) }}
+        if: ${{ github.event.workflow_run.conclusion != 'cancelled' && github.event.workflow_run.conclusion != 'success' }}
         run: |
           echo "Upstream concluded ${{ github.event.workflow_run.conclusion }} -> marking badge as failing."
           exit 1
+
+      - name: Check latest non-cancelled run of build-nightly_12.2.yml
+        if: ${{ github.event.workflow_run.conclusion == 'cancelled' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # authenticate gh with the token
+          echo "Authenticating gh..."
+          gh auth login --with-token <<< "$GITHUB_TOKEN"
+
+          workflow_file='build-nightly_12.2.yml'
+          repo="${GITHUB_REPOSITORY}"  # owner/repo
+
+          echo "Querying recent runs for workflow file: $workflow_file in $repo"
+
+          # Count non-cancelled runs
+          non_cancelled_count=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.status!="cancelled")) | length')
+
+          if [ -z "$non_cancelled_count" ] || [ "$non_cancelled_count" -eq 0 ]; then
+            echo "No non-cancelled runs found for $workflow_file."
+            exit 1
+          fi
+
+          # Get the first (most recent) non-cancelled run
+          run_id=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.status!="cancelled")) | .[0].id')
+          run_status=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.status!="cancelled")) | .[0].status')
+          run_conclusion=$(gh api repos/"$repo"/actions/workflows/"$workflow_file"/runs --jq '.workflow_runs | map(select(.status!="cancelled")) | .[0].conclusion')
+
+          echo "Selected run id=$run_id status=$run_status conclusion=$run_conclusion"
+
+          # If the found run's conclusion is not "success", fail
+          if [ "$run_conclusion" != "success" ]; then
+            echo "Latest non-cancelled run (id=$run_id) conclusion is '$run_conclusion' (status='$run_status'). Expecting 'success'. Failing as requested."
+            exit 1
+          fi
+
+          echo "Latest non-cancelled run succeeded."
