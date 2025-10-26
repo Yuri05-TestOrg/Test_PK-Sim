@@ -23,7 +23,7 @@ permissions:
   actions: read
 
 jobs:
-  badge-proxy:
+  badge:
     uses: Yuri05-TestOrg/Test_Workflows/.github/workflows/nightly-badge.yml@main
     with:
       nightly-build-workflow: "build-nightly_12.2.yml"
