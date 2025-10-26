@@ -12,5 +12,5 @@ jobs:
     uses: ./.github/workflows/nightly-badge.yml
     with:
       nightly-build-workflow: "build-nightly_12.2.yml"
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #secrets:
+      #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
