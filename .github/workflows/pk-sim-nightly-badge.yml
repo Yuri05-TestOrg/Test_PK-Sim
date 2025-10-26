@@ -1,0 +1,25 @@
+name: PK-Sim Nightly Badge
+
+on:
+  workflow_run:
+    workflows:
+      - build-nightly_12.2.yml
+    types:
+      - completed
+
+jobs:
+  badge:
+    name: Badge proxy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log upstream conclusion
+        run: |
+          echo "Upstream conclusion: ${{ github.event.workflow_run.conclusion }}"
+
+      # Fail this proxy workflow only for real failures. Everything else (success, cancelled, skipped, neutral)
+      # will result in a successful proxy run, making the badge green.
+      - name: Mark as failing if upstream failed
+        if: ${{ contains(fromJson('["failure","timed_out","action_required","stale","startup_failure"]'), github.event.workflow_run.conclusion) }}
+        run: |
+          echo "Upstream concluded ${{ github.event.workflow_run.conclusion }} -> marking badge as failing."
+          exit 1
