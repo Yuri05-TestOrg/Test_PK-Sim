@@ -5,7 +5,6 @@ using static OSPSuite.Core.Domain.Constants;
 
 namespace PKSim.Core
 {
-   XXX
    public static class CoreConstants
    {
       public const int LAYOUT_VERSION = 38;
