@@ -12,7 +12,7 @@ namespace PKSim.Assets
    {
       public static class Warning
       {
-         public const string RenalAndGFRSelected = "Renal plasma clearance should not be used in conjunction with GFR";
+         public const string RenalAndGFRSelected = "Renal plasma clearance should not be used in conjunction with GFR ";
          public const string HepaticAndSpecific = "Using hepatic plasma clearance in conjunction with metabolism processes might lead to more clearance than expected";
          public const string ThisItNotATemplateBuildingBlock = "This is not the template building block!";
          public const string FractionAbsorbedAndEHC = "Please note that, e.g. in the case of enterohepatic circulation, the calculated fraction of dose absorbed may exceed 1";
